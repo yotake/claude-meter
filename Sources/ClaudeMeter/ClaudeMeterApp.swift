@@ -194,11 +194,9 @@ struct UsagePopoverView: View {
                         }
                     }
                     if let primary = codex.primary {
-                        // 5h window resets today/tomorrow — show absolute date+time
-                        // (like the Claude session), not a weekday which reads as days away.
                         CompactUsageRow(title: L.codexSession, window: primary,
                                         warnPct: settings.barWarnPct, critPct: settings.barCritPct,
-                                        resetText: primary.resetsAt.map { L.resetsAt(Self.resetTimestamp($0)) },
+                                        resetText: primary.resetsAt.map { L.resetsAt(Self.weekday($0)) },
                                         showResetTime: settings.showResetTime)
                     }
                     if let secondary = codex.secondary {
@@ -354,7 +352,7 @@ struct UsagePopoverView: View {
         } else if let u = model.accountUsages[account.id] {
             if settings.showSession, let s = u.fiveHour {
                 CompactUsageRow(title: L.limSession, window: s, warnPct: settings.barWarnPct, critPct: settings.barCritPct,
-                                resetText: s.resetsAt.map { L.resetsAt(Self.resetTimestamp($0)) },
+                                resetText: s.resetsAt.map { L.resetsAt(Self.weekday($0)) },
                                 showResetTime: settings.showResetTime)
             }
             if settings.showWeeklyAll, let w = u.sevenDay {
@@ -457,19 +455,12 @@ struct UsagePopoverView: View {
         return "\(n)"
     }
 
+    /// Reset time shown for every limit row, uniformly: weekday + 24h time
+    /// (e.g. "Thu 14:00"), localized.
     static func weekday(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.locale = AppLanguage.current.locale
         formatter.dateFormat = "E HH:mm"
-        return formatter.string(from: date)
-    }
-
-    /// Absolute reset date + time, e.g. "6/18 19:30" — used for the short 5h
-    /// session window where the wall-clock reset time is more useful than a weekday.
-    static func resetTimestamp(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = AppLanguage.current.locale
-        formatter.dateFormat = "M/d HH:mm"
         return formatter.string(from: date)
     }
 }
