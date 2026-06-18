@@ -201,9 +201,11 @@ struct UsagePopoverView: View {
                         }
                     }
                     if let primary = codex.primary {
-                        // 5h session: no reset line (same rationale as the Claude session row).
+                        // 5h session: reset time only (no weekday).
                         CompactUsageRow(title: L.codexSession, window: primary,
-                                        warnPct: settings.barWarnPct, critPct: settings.barCritPct)
+                                        warnPct: settings.barWarnPct, critPct: settings.barCritPct,
+                                        resetText: primary.resetsAt.map { L.resetsAt(Self.timeOnly($0)) },
+                                        showResetTime: settings.showResetTime)
                     }
                     if let secondary = codex.secondary {
                         CompactUsageRow(title: L.codexWeekly, window: secondary,
@@ -357,8 +359,10 @@ struct UsagePopoverView: View {
             }
         } else if let u = model.accountUsages[account.id] {
             if settings.showSession, let s = u.fiveHour {
-                // 5h session: no reset line — a weekday is meaningless for a same-day window.
-                CompactUsageRow(title: L.limSession, window: s, warnPct: settings.barWarnPct, critPct: settings.barCritPct)
+                // 5h session: reset time only (no weekday — it resets the same day).
+                CompactUsageRow(title: L.limSession, window: s, warnPct: settings.barWarnPct, critPct: settings.barCritPct,
+                                resetText: s.resetsAt.map { L.resetsAt(Self.timeOnly($0)) },
+                                showResetTime: settings.showResetTime)
             }
             if settings.showWeeklyAll, let w = u.sevenDay {
                 CompactUsageRow(title: L.limWeekly, window: w, warnPct: settings.barWarnPct, critPct: settings.barCritPct,
@@ -499,12 +503,20 @@ struct UsagePopoverView: View {
         return "\(n)"
     }
 
-    /// Reset time shown for every limit row, uniformly: weekday + 24h time
-    /// (e.g. "Thu 14:00"), localized.
+    /// Weekday + 24h time (e.g. "Thu 14:00"), localized — used for the weekly windows.
     static func weekday(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.locale = AppLanguage.current.locale
         formatter.dateFormat = "E HH:mm"
+        return formatter.string(from: date)
+    }
+
+    /// Time only (e.g. "14:54"), localized — used for the 5h session windows
+    /// where the weekday is redundant (they reset the same day).
+    static func timeOnly(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = AppLanguage.current.locale
+        formatter.dateFormat = "HH:mm"
         return formatter.string(from: date)
     }
 }
