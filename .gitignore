@@ -1,0 +1,4 @@
+.build/
+ClaudeMeter.app/
+.DS_Store
+dist/
