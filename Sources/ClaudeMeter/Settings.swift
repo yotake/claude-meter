@@ -97,6 +97,8 @@ final class AppSettings: ObservableObject {
     @Published var showWeeklyAll: Bool { didSet { defaults.set(showWeeklyAll, forKey: Keys.showWeeklyAll) } }
     @Published var showSonnet: Bool    { didSet { defaults.set(showSonnet, forKey: Keys.showSonnet) } }
     @Published var showOpus: Bool      { didSet { defaults.set(showOpus, forKey: Keys.showOpus) } }
+    /// Show each limit's reset time as a visible line (vs hover-only) in the popover.
+    @Published var showResetTime: Bool { didSet { defaults.set(showResetTime, forKey: Keys.showResetTime) } }
     @Published var showCodex: Bool     { didSet { defaults.set(showCodex, forKey: Keys.showCodex) } }
     @Published var showClaudeInMenuBar: Bool { didSet { defaults.set(showClaudeInMenuBar, forKey: Keys.showClaudeInMenuBar) } }
     @Published var showCodexInMenuBar: Bool { didSet { defaults.set(showCodexInMenuBar, forKey: Keys.showCodexInMenuBar) } }
@@ -120,6 +122,7 @@ final class AppSettings: ObservableObject {
         showWeeklyAll = bool(Keys.showWeeklyAll, true)
         showSonnet    = bool(Keys.showSonnet, true)
         showOpus      = bool(Keys.showOpus, true)
+        showResetTime = bool(Keys.showResetTime, true)
         showCodex     = bool(Keys.showCodex, true)
         showClaudeInMenuBar = bool(Keys.showClaudeInMenuBar, true)
         showCodexInMenuBar = bool(Keys.showCodexInMenuBar, true)
@@ -133,6 +136,7 @@ final class AppSettings: ObservableObject {
         static let showWeeklyAll = "showWeeklyAll"
         static let showSonnet    = "showSonnet"
         static let showOpus      = "showOpus"
+        static let showResetTime = "showResetTime"
         static let showCodex     = "showCodex"
         static let showClaudeInMenuBar = "showClaudeInMenuBar"
         static let showCodexInMenuBar = "showCodexInMenuBar"

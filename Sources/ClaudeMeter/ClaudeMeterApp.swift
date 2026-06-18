@@ -194,14 +194,18 @@ struct UsagePopoverView: View {
                         }
                     }
                     if let primary = codex.primary {
+                        // 5h window resets today/tomorrow — show absolute date+time
+                        // (like the Claude session), not a weekday which reads as days away.
                         CompactUsageRow(title: L.codexSession, window: primary,
                                         warnPct: settings.barWarnPct, critPct: settings.barCritPct,
-                                        resetHelp: primary.resetsAt.map { L.resetsAt(Self.weekday($0)) })
+                                        resetText: primary.resetsAt.map { L.resetsAt(Self.resetTimestamp($0)) },
+                                        showResetTime: settings.showResetTime)
                     }
                     if let secondary = codex.secondary {
                         CompactUsageRow(title: L.codexWeekly, window: secondary,
                                         warnPct: settings.barWarnPct, critPct: settings.barCritPct,
-                                        resetHelp: secondary.resetsAt.map { L.resetsAt(Self.weekday($0)) })
+                                        resetText: secondary.resetsAt.map { L.resetsAt(Self.weekday($0)) },
+                                        showResetTime: settings.showResetTime)
                     }
                     // Flag staleness: once the snapshot is older than the primary
                     // (5h) window, the shown % may have rolled over since.
@@ -350,19 +354,23 @@ struct UsagePopoverView: View {
         } else if let u = model.accountUsages[account.id] {
             if settings.showSession, let s = u.fiveHour {
                 CompactUsageRow(title: L.limSession, window: s, warnPct: settings.barWarnPct, critPct: settings.barCritPct,
-                                resetHelp: s.resetsAt.map { L.resetsIn(Self.remaining(until: $0)) })
+                                resetText: s.resetsAt.map { L.resetsAt(Self.resetTimestamp($0)) },
+                                showResetTime: settings.showResetTime)
             }
             if settings.showWeeklyAll, let w = u.sevenDay {
                 CompactUsageRow(title: L.limWeekly, window: w, warnPct: settings.barWarnPct, critPct: settings.barCritPct,
-                                resetHelp: w.resetsAt.map { L.resetsAt(Self.weekday($0)) })
+                                resetText: w.resetsAt.map { L.resetsAt(Self.weekday($0)) },
+                                showResetTime: settings.showResetTime)
             }
             if settings.showSonnet, let s = u.sevenDaySonnet {
                 CompactUsageRow(title: L.limSonnet, window: s, warnPct: settings.barWarnPct, critPct: settings.barCritPct,
-                                resetHelp: s.resetsAt.map { L.resetsAt(Self.weekday($0)) })
+                                resetText: s.resetsAt.map { L.resetsAt(Self.weekday($0)) },
+                                showResetTime: settings.showResetTime)
             }
             if settings.showOpus, let o = u.sevenDayOpus {
                 CompactUsageRow(title: L.limOpus, window: o, warnPct: settings.barWarnPct, critPct: settings.barCritPct,
-                                resetHelp: o.resetsAt.map { L.resetsAt(Self.weekday($0)) })
+                                resetText: o.resetsAt.map { L.resetsAt(Self.weekday($0)) },
+                                showResetTime: settings.showResetTime)
             }
         } else {
             ProgressView().controlSize(.small)
@@ -376,6 +384,7 @@ struct UsagePopoverView: View {
                 Toggle(L.showWeeklyAll, isOn: $settings.showWeeklyAll)
                 Toggle(L.showSonnet, isOn: $settings.showSonnet)
                 Toggle(L.showOpus, isOn: $settings.showOpus)
+                Toggle(L.showResetTime, isOn: $settings.showResetTime)
                 Toggle(L.showCodex, isOn: $settings.showCodex)
                 Toggle(L.showClaudeInMenuBar, isOn: $settings.showClaudeInMenuBar)
                 Toggle(L.showCodexInMenuBar, isOn: $settings.showCodexInMenuBar)
@@ -448,29 +457,33 @@ struct UsagePopoverView: View {
         return "\(n)"
     }
 
-    static func remaining(until date: Date) -> String {
-        let seconds = max(0, date.timeIntervalSinceNow)
-        let hours = Int(seconds) / 3600
-        let minutes = (Int(seconds) % 3600) / 60
-        return L.duration(hours: hours, minutes: minutes)
-    }
-
     static func weekday(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.locale = AppLanguage.current.locale
         formatter.dateFormat = "E HH:mm"
         return formatter.string(from: date)
     }
+
+    /// Absolute reset date + time, e.g. "6/18 19:30" — used for the short 5h
+    /// session window where the wall-clock reset time is more useful than a weekday.
+    static func resetTimestamp(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = AppLanguage.current.locale
+        formatter.dateFormat = "M/d HH:mm"
+        return formatter.string(from: date)
+    }
 }
 
-/// Compact one-line limit bar: "Title …… 42%" + a thin colored bar. Reset time
-/// is on hover (`.help`) to keep the popover short.
+/// Compact one-line limit bar: "Title …… 42%" + a thin colored bar. The reset
+/// time is always on hover (`.help`); when `showResetTime` is on it also shows
+/// as a visible caption line beneath the bar.
 struct CompactUsageRow: View {
     let title: String
     let window: UsageWindow
     var warnPct: Double = 60
     var critPct: Double = 85
-    var resetHelp: String?
+    var resetText: String?
+    var showResetTime: Bool = false
 
     private var fraction: Double { min(max(window.utilization / 100, 0), 1) }
 
@@ -506,7 +519,15 @@ struct CompactUsageRow: View {
                 }
             }
             .frame(height: 4)
+            if showResetTime, let resetText, !resetText.isEmpty {
+                // Right-aligned so the changing value lines up under the "% used"
+                // column — easier to scan than a left-aligned caption.
+                Text(resetText)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
         }
-        .help(resetHelp ?? "")
+        .help(resetText ?? "")
     }
 }

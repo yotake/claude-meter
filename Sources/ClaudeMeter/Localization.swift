@@ -45,9 +45,6 @@ enum L {
     static var loading: String        { ja ? "読み込み中…" : "Loading…" }
 
     // MARK: - Usage rows
-    static func resetsIn(_ remaining: String) -> String {
-        ja ? "リセットまで \(remaining)" : "Resets in \(remaining)"
-    }
     static func resetsAt(_ weekday: String) -> String {
         ja ? "\(weekday) にリセット" : "Resets \(weekday)"
     }
@@ -77,20 +74,13 @@ enum L {
     static var accountDefaultLabel: String { ja ? "アカウント" : "Account" }
     static var remove: String             { ja ? "削除" : "Remove" }
 
-    // MARK: - Duration (time remaining)
-    static func duration(hours: Int, minutes: Int) -> String {
-        if ja {
-            return hours > 0 ? "\(hours)時間\(minutes)分" : "\(minutes)分"
-        }
-        return hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
-    }
-
     // MARK: - Settings
     static var settings: String           { ja ? "設定" : "Settings" }
     static var showSession: String        { ja ? "セッションを表示" : "Show session" }
     static var showWeeklyAll: String      { ja ? "週間(全モデル)を表示" : "Show weekly (all models)" }
     static var showSonnet: String         { ja ? "Sonnet を表示" : "Show Sonnet" }
     static var showOpus: String           { ja ? "Opus を表示" : "Show Opus" }
+    static var showResetTime: String      { ja ? "リセット時刻を表示" : "Show reset time" }
     static var barColorThresholds: String { ja ? "バーの色しきい値" : "Bar color thresholds" }
     static var warnLabel: String          { ja ? "警告" : "Warn" }
     static var critLabel: String          { ja ? "危険" : "Critical" }
