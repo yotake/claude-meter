@@ -183,8 +183,11 @@ struct UsagePopoverView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
 
-            // Every added account's limits, shown compactly.
-            ForEach(model.accounts) { account in
+            // Every added account's limits, shown compactly. A divider separates
+            // consecutive accounts; the sections below add their own leading
+            // dividers, so there is exactly one divider between each section.
+            ForEach(Array(model.accounts.enumerated()), id: \.element.id) { index, account in
+                if index > 0 { Divider() }
                 accountBlock(account)
             }
 
@@ -335,7 +338,6 @@ struct UsagePopoverView: View {
             .onTapGesture { model.selectAccount(account.id) }
 
             accountBody(account)
-            Divider()
         }
     }
 
