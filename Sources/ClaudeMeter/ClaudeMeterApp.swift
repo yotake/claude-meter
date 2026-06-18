@@ -35,14 +35,16 @@ struct ClaudeMeterApp: App {
                 fiveHour: UsageWindow(utilization: 42, resetsAt: Date().addingTimeInterval(2 * 3600 + 12 * 60)),
                 sevenDay: UsageWindow(utilization: 63, resetsAt: week),
                 sevenDaySonnet: UsageWindow(utilization: 21, resetsAt: week),
-                sevenDayOpus: UsageWindow(utilization: 88, resetsAt: week),
+                // Opus weekly is absent for most plans (the API omits seven_day_opus),
+                // so leave it nil to match what real accounts actually show.
+                sevenDayOpus: nil,
                 fetchedAt: Date()
             ),
             "b": Usage(
                 fiveHour: UsageWindow(utilization: 8, resetsAt: Date().addingTimeInterval(3 * 3600)),
                 sevenDay: UsageWindow(utilization: 31, resetsAt: week),
                 sevenDaySonnet: UsageWindow(utilization: 12, resetsAt: week),
-                sevenDayOpus: UsageWindow(utilization: 55, resetsAt: week),
+                sevenDayOpus: nil,
                 fetchedAt: Date()
             ),
         ]
