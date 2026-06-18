@@ -394,7 +394,12 @@ struct UsagePopoverView: View {
                 settingsToggle(L.showSession, $settings.showSession)
                 settingsToggle(L.showWeeklyAll, $settings.showWeeklyAll)
                 settingsToggle(L.showSonnet, $settings.showSonnet)
-                settingsToggle(L.showOpus, $settings.showOpus)
+                // A separate weekly Opus limit only exists on some plans (the API
+                // omits seven_day_opus otherwise), so only offer the toggle when an
+                // account actually reports one — else it's a no-op control.
+                if model.accountUsages.values.contains(where: { $0.sevenDayOpus != nil }) {
+                    settingsToggle(L.showOpus, $settings.showOpus)
+                }
                 settingsToggle(L.showResetTime, $settings.showResetTime)
                 settingsToggle(L.showCodex, $settings.showCodex)
                 settingsToggle(L.showClaudeInMenuBar, $settings.showClaudeInMenuBar)
