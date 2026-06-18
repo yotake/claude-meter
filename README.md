@@ -16,6 +16,14 @@ A lightweight macOS menu bar app that shows your Claude usage in real time.
   <img src="assets/screenshot-ja.png" width="300" alt="ClaudeMeter popover (日本語)">
 </p>
 
+<p align="center"><em>Settings panel (expanded)</em></p>
+
+<p align="center">
+  <img src="assets/screenshot-settings-en.png" width="300" alt="ClaudeMeter settings (English)">
+  &nbsp;&nbsp;
+  <img src="assets/screenshot-settings-ja.png" width="300" alt="ClaudeMeter settings (日本語)">
+</p>
+
 The UI follows your macOS language (Japanese / English).
 
 ## What it shows

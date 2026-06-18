@@ -38,8 +38,8 @@ enum L {
     static var sonnetOnly: String     { ja ? "Sonnet のみ" : "Sonnet only" }
     static var opusOnly: String       { ja ? "Opus のみ" : "Opus only" }
     // Compact per-account limit labels
-    static var limSession: String     { ja ? "セッション" : "Session" }
-    static var limWeekly: String      { ja ? "週間" : "Weekly" }
+    static var limSession: String     { ja ? "セッション(5時間)" : "Session (5h)" }
+    static var limWeekly: String      { ja ? "週間(全モデル)" : "Weekly (All models)" }
     static var limSonnet: String      { "Sonnet" }
     static var limOpus: String        { "Opus" }
     static var loading: String        { ja ? "読み込み中…" : "Loading…" }

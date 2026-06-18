@@ -16,6 +16,14 @@ macOS メニューバーに Claude の使用量をリアルタイム表示する
   <img src="assets/screenshot-en.png" width="300" alt="ClaudeMeter popover (English)">
 </p>
 
+<p align="center"><em>設定パネル（展開時）</em></p>
+
+<p align="center">
+  <img src="assets/screenshot-settings-ja.png" width="300" alt="ClaudeMeter 設定（日本語）">
+  &nbsp;&nbsp;
+  <img src="assets/screenshot-settings-en.png" width="300" alt="ClaudeMeter settings (English)">
+</p>
+
 UI は macOS の言語設定（日本語 / 英語）に追従します。
 
 ## 表示できるもの

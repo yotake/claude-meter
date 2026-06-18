@@ -58,7 +58,11 @@ struct ClaudeMeterApp: App {
                 .padding(6)
                 .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
             UsagePopoverView(model: model, settings: settings, previewMode: true)
-        }.padding(.top, 6)
+        }
+        .padding(12)
+        // Opaque white so the PNG stays readable on GitHub's dark theme
+        // (the popover content is otherwise transparent).
+        .background(Color.white)
         let renderer = ImageRenderer(content: view)
         renderer.scale = 2
         guard let image = renderer.nsImage,
@@ -117,7 +121,10 @@ struct UsagePopoverView: View {
     @State private var tokenInput: String = ""
     @State private var labelInput: String = ""
     @State private var commandCopied: Bool = false
-    @State private var showingSettings: Bool = false
+    // Collapsed in the real app; the screenshot renderer can start it open via
+    // CLAUDEMETER_RENDER_SETTINGS so the Settings panel appears in the capture.
+    @State private var showingSettings: Bool =
+        ProcessInfo.processInfo.environment["CLAUDEMETER_RENDER_SETTINGS"] != nil
     /// When true (screenshot rendering only), interactive controls are drawn as
     /// their labels instead of live Buttons — ImageRenderer can't render Buttons.
     /// Defaults to false, so the real app is unaffected.
@@ -194,10 +201,9 @@ struct UsagePopoverView: View {
                         }
                     }
                     if let primary = codex.primary {
+                        // 5h session: no reset line (same rationale as the Claude session row).
                         CompactUsageRow(title: L.codexSession, window: primary,
-                                        warnPct: settings.barWarnPct, critPct: settings.barCritPct,
-                                        resetText: primary.resetsAt.map { L.resetsAt(Self.weekday($0)) },
-                                        showResetTime: settings.showResetTime)
+                                        warnPct: settings.barWarnPct, critPct: settings.barCritPct)
                     }
                     if let secondary = codex.secondary {
                         CompactUsageRow(title: L.codexWeekly, window: secondary,
@@ -351,9 +357,8 @@ struct UsagePopoverView: View {
             }
         } else if let u = model.accountUsages[account.id] {
             if settings.showSession, let s = u.fiveHour {
-                CompactUsageRow(title: L.limSession, window: s, warnPct: settings.barWarnPct, critPct: settings.barCritPct,
-                                resetText: s.resetsAt.map { L.resetsAt(Self.weekday($0)) },
-                                showResetTime: settings.showResetTime)
+                // 5h session: no reset line — a weekday is meaningless for a same-day window.
+                CompactUsageRow(title: L.limSession, window: s, warnPct: settings.barWarnPct, critPct: settings.barCritPct)
             }
             if settings.showWeeklyAll, let w = u.sevenDay {
                 CompactUsageRow(title: L.limWeekly, window: w, warnPct: settings.barWarnPct, critPct: settings.barCritPct,
@@ -378,20 +383,30 @@ struct UsagePopoverView: View {
     @ViewBuilder private var settingsSection: some View {
         DisclosureGroup(isExpanded: $showingSettings) {
             VStack(alignment: .leading, spacing: 6) {
-                Toggle(L.showSession, isOn: $settings.showSession)
-                Toggle(L.showWeeklyAll, isOn: $settings.showWeeklyAll)
-                Toggle(L.showSonnet, isOn: $settings.showSonnet)
-                Toggle(L.showOpus, isOn: $settings.showOpus)
-                Toggle(L.showResetTime, isOn: $settings.showResetTime)
-                Toggle(L.showCodex, isOn: $settings.showCodex)
-                Toggle(L.showClaudeInMenuBar, isOn: $settings.showClaudeInMenuBar)
-                Toggle(L.showCodexInMenuBar, isOn: $settings.showCodexInMenuBar)
+                settingsToggle(L.showSession, $settings.showSession)
+                settingsToggle(L.showWeeklyAll, $settings.showWeeklyAll)
+                settingsToggle(L.showSonnet, $settings.showSonnet)
+                settingsToggle(L.showOpus, $settings.showOpus)
+                settingsToggle(L.showResetTime, $settings.showResetTime)
+                settingsToggle(L.showCodex, $settings.showCodex)
+                settingsToggle(L.showClaudeInMenuBar, $settings.showClaudeInMenuBar)
+                settingsToggle(L.showCodexInMenuBar, $settings.showCodexInMenuBar)
                 if settings.showCodex {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(L.codexSessionsPath).font(.caption)
-                        TextField(L.codexSessionsPathPlaceholder, text: $settings.codexSessionsPath)
-                            .textFieldStyle(.roundedBorder)
-                            .onSubmit { model.refreshCodex() }
+                        if previewMode {
+                            // Static stand-in: ImageRenderer can't draw a TextField.
+                            Text(settings.codexSessionsPath.isEmpty ? L.codexSessionsPathPlaceholder : settings.codexSessionsPath)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal, 6).padding(.vertical, 4)
+                                .overlay(RoundedRectangle(cornerRadius: 5).stroke(.quaternary))
+                        } else {
+                            TextField(L.codexSessionsPathPlaceholder, text: $settings.codexSessionsPath)
+                                .textFieldStyle(.roundedBorder)
+                                .onSubmit { model.refreshCodex() }
+                        }
                         Text(L.codexSessionsPathHint)
                             .font(.caption2)
                             .foregroundStyle(.secondary)
@@ -420,10 +435,39 @@ struct UsagePopoverView: View {
         }
     }
 
+    /// A settings checkbox: a live Toggle at runtime, a static checkbox glyph +
+    /// label when rendering a screenshot (ImageRenderer can't draw a Toggle).
+    @ViewBuilder
+    private func settingsToggle(_ title: String, _ isOn: Binding<Bool>) -> some View {
+        if previewMode {
+            HStack(spacing: 6) {
+                Image(systemName: isOn.wrappedValue ? "checkmark.square.fill" : "square")
+                    .foregroundStyle(isOn.wrappedValue ? Color.accentColor : Color.secondary)
+                Text(title)
+            }
+        } else {
+            Toggle(title, isOn: isOn)
+        }
+    }
+
     private func thresholdSlider(_ title: String, value: Binding<Double>, range: ClosedRange<Double>) -> some View {
         HStack {
             Text(title).font(.caption)
-            Slider(value: value, in: range, step: 5)
+            if previewMode {
+                // Static slider stand-in (ImageRenderer can't draw a live Slider).
+                GeometryReader { geo in
+                    let frac = (value.wrappedValue - range.lowerBound) / (range.upperBound - range.lowerBound)
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(.quaternary).frame(height: 3)
+                        Circle().fill(Color.accentColor).frame(width: 12, height: 12)
+                            .offset(x: max(0, min(geo.size.width - 12, (geo.size.width - 12) * frac)))
+                    }
+                    .frame(maxHeight: .infinity, alignment: .center)
+                }
+                .frame(height: 12)
+            } else {
+                Slider(value: value, in: range, step: 5)
+            }
             Text("\(Int(value.wrappedValue))%")
                 .font(.caption)
                 .monospacedDigit()
