@@ -1,5 +1,7 @@
 # ClaudeMeter
 
+### ⬇️ [Download ClaudeMeter (.dmg)](https://github.com/yotake/claude-meter/releases/download/v1.0/ClaudeMeter-1.0.dmg)
+
 **[日本語 README はこちら / Japanese README](README.ja.md)**
 
 A lightweight macOS menu bar app that shows your Claude usage in real time.
