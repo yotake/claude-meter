@@ -307,6 +307,12 @@ struct UsagePopoverView: View {
                 .buttonStyle(.borderless)
                 .foregroundStyle(.secondary)
             }
+            // Subtle signature line: puts a face to the free app and nudges
+            // toward the Support button above.
+            Text(L.madeBy)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .center)
         }
         .padding(14)
         .frame(width: 300)

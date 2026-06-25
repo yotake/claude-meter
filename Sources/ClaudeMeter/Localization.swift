@@ -90,6 +90,7 @@ enum L {
     static var logout: String        { ja ? "ログアウト" : "Log out" }
     static var quit: String          { ja ? "終了" : "Quit" }
     static var support: String       { ja ? "開発を支援" : "Support" }
+    static var madeBy: String        { ja ? "無料 · 二児の父が個人開発 ❤️" : "Free · made by a dad of two ❤️" }
 
     // MARK: - Accounts
     static var add: String                { ja ? "追加" : "Add" }
