@@ -1,6 +1,6 @@
 # ClaudeMeter
 
-### ⬇️ [ClaudeMeter (.dmg) をダウンロード](https://github.com/yotake/claude-meter/releases/download/v1.1/ClaudeMeter-1.1.dmg)
+### ⬇️ [ClaudeMeter (.dmg) をダウンロード](https://github.com/yotake/claude-meter/releases/latest)
 
 **[English README here](README.md)**
 
