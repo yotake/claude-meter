@@ -95,6 +95,8 @@ struct MenuBarLabel: View {
         let status = model.menuBarStatus(warnPct: settings.barWarnPct, critPct: settings.barCritPct)
         // A MenuBarExtra status item reliably renders only ONE image + ONE text, so
         // the Codex session % is folded into the text rather than a second glyph.
+        // (The burn-rate forecast can't be a status-item tooltip — SwiftUI
+        // rasterizes this label to a template image — so it lives in the popover.)
         HStack(spacing: 3) {
             Image(systemName: status.symbolName)
             Text(menuText)
@@ -363,10 +365,7 @@ struct UsagePopoverView: View {
             }
         } else if let u = model.accountUsages[account.id] {
             if settings.showSession, let s = u.fiveHour {
-                // 5h session: reset time only (no weekday — it resets the same day).
-                CompactUsageRow(title: L.limSession, window: s, warnPct: settings.barWarnPct, critPct: settings.barCritPct,
-                                resetText: s.resetsAt.map { L.resetsAt(Self.timeOnly($0)) },
-                                showResetTime: settings.showResetTime)
+                sessionRow(s)
             }
             if settings.showWeeklyAll, let w = u.sevenDay {
                 CompactUsageRow(title: L.limWeekly, window: w, warnPct: settings.barWarnPct, critPct: settings.barCritPct,
@@ -391,6 +390,8 @@ struct UsagePopoverView: View {
     @ViewBuilder private var settingsSection: some View {
         DisclosureGroup(isExpanded: $showingSettings) {
             VStack(alignment: .leading, spacing: 6) {
+                languagePicker()
+                Divider()
                 settingsToggle(L.showSession, $settings.showSession)
                 settingsToggle(L.showWeeklyAll, $settings.showWeeklyAll)
                 settingsToggle(L.showSonnet, $settings.showSonnet)
@@ -445,6 +446,51 @@ struct UsagePopoverView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(Rectangle())
                 .onTapGesture { withAnimation { showingSettings.toggle() } }
+        }
+    }
+
+    /// The 5h session row, preceded by a burn-rate forecast caption when the
+    /// trajectory is noteworthy (warning/critical). The caption sits ABOVE the
+    /// row so it reads as an alert for the session it describes.
+    @ViewBuilder
+    private func sessionRow(_ window: UsageWindow) -> some View {
+        let forecast = SessionForecast.compute(window: window, warnPct: settings.barWarnPct, critPct: settings.barCritPct)
+        if forecast.status != .ok {
+            Text(forecast.describe())
+                .font(.caption2)
+                .foregroundStyle(forecast.status.color)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        // 5h session: reset time only (no weekday — it resets the same day).
+        CompactUsageRow(title: L.limSession, window: window, warnPct: settings.barWarnPct, critPct: settings.barCritPct,
+                        resetText: window.resetsAt.map { L.resetsAt(Self.timeOnly($0)) },
+                        showResetTime: settings.showResetTime)
+    }
+
+    /// UI-language selector: a live Picker at runtime, a static label when
+    /// rendering a screenshot (ImageRenderer can't draw a Picker).
+    @ViewBuilder
+    private func languagePicker() -> some View {
+        HStack {
+            Text(L.language).font(.caption)
+            Spacer()
+            if previewMode {
+                Text(settings.language.displayName)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 6).padding(.vertical, 2)
+                    .overlay(RoundedRectangle(cornerRadius: 5).stroke(.quaternary))
+            } else {
+                Picker(L.language, selection: $settings.language) {
+                    Text(L.langSystem).tag(LanguagePref.system)
+                    Text("日本語").tag(LanguagePref.ja)
+                    Text("English").tag(LanguagePref.en)
+                }
+                .labelsHidden()
+                .pickerStyle(.menu)
+                .fixedSize()
+            }
         }
     }
 

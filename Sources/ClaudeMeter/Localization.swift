@@ -11,9 +11,19 @@ enum AppLanguage {
     case japanese
     case english
 
+    /// UserDefaults key shared with `AppSettings.language`, so `L` and date
+    /// formatting can resolve the chosen language without threading the settings
+    /// object through every call site.
+    static let overrideKey = "language"
+
     static var current: AppLanguage {
-        let preferred = Locale.preferredLanguages.first ?? "en"
-        return preferred.hasPrefix("ja") ? .japanese : .english
+        switch UserDefaults.standard.string(forKey: overrideKey) {
+        case LanguagePref.ja.rawValue: return .japanese
+        case LanguagePref.en.rawValue: return .english
+        default:   // .system / unset → follow the OS preferred language
+            let preferred = Locale.preferredLanguages.first ?? "en"
+            return preferred.hasPrefix("ja") ? .japanese : .english
+        }
     }
 
     /// Locale used for date / weekday formatting so it matches the UI language.
@@ -21,6 +31,20 @@ enum AppLanguage {
         switch self {
         case .japanese: return Locale(identifier: "ja_JP")
         case .english:  return Locale(identifier: "en_US")
+        }
+    }
+}
+
+/// UI-language preference. `.system` follows the OS language; `.ja` / `.en`
+/// force that language regardless of the OS setting. Persisted via its rawValue.
+enum LanguagePref: String, CaseIterable {
+    case system, ja, en
+
+    var displayName: String {
+        switch self {
+        case .system: return L.langSystem
+        case .ja:     return "日本語"
+        case .en:     return "English"
         }
     }
 }
@@ -81,6 +105,8 @@ enum L {
     static var showSonnet: String         { ja ? "Sonnet を表示" : "Show Sonnet" }
     static var showOpus: String           { ja ? "Opus を表示" : "Show Opus" }
     static var showResetTime: String      { ja ? "リセット時刻を表示" : "Show reset time" }
+    static var language: String           { ja ? "言語" : "Language" }
+    static var langSystem: String         { ja ? "システム" : "System" }
     static var barColorThresholds: String { ja ? "バーの色しきい値" : "Bar color thresholds" }
     static var warnLabel: String          { ja ? "警告" : "Warn" }
     static var critLabel: String          { ja ? "危険" : "Critical" }

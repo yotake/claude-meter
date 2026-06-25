@@ -54,7 +54,7 @@ struct SessionForecast {
         // judge by current utilization only.
         func currentOnly() -> SessionForecast {
             SessionForecast(
-                status: status(current: u, projected: u, exhaustsBeforeReset: false, warnPct: warn, critPct: crit),
+                status: derivedStatus(projected: u, exhaustsBeforeReset: false, warnPct: warn, critPct: crit),
                 projectedAtReset: u,
                 exhaustDate: nil,
                 willExhaustBeforeReset: false
@@ -73,17 +73,38 @@ struct SessionForecast {
         let exhaustDate = u < 100 ? now.addingTimeInterval(secondsToExhaust) : now
 
         return SessionForecast(
-            status: status(current: u, projected: projected, exhaustsBeforeReset: willExhaust, warnPct: warn, critPct: crit),
+            status: derivedStatus(projected: projected, exhaustsBeforeReset: willExhaust, warnPct: warn, critPct: crit),
             projectedAtReset: projected,
             exhaustDate: exhaustDate,
             willExhaustBeforeReset: willExhaust
         )
     }
 
-    private static func status(current u: Double, projected: Double, exhaustsBeforeReset: Bool, warnPct: Double, critPct: Double) -> UsageStatus {
-        if u >= critPct || exhaustsBeforeReset { return .critical }
-        if u >= warnPct || projected >= warnPct { return .warning }
+    /// The menu bar % already shows where usage is NOW, so the icon reflects only
+    /// the TRAJECTORY: where the current burn rate is headed by the window reset.
+    /// `exhaustsBeforeReset` (on pace to hit 100% before reset) and the projected
+    /// utilization drive the state — current utilization deliberately does not.
+    private static func derivedStatus(projected: Double, exhaustsBeforeReset: Bool, warnPct: Double, critPct: Double) -> UsageStatus {
+        if exhaustsBeforeReset || projected >= critPct { return .critical }
+        if projected >= warnPct { return .warning }
         return .ok
+    }
+
+    /// Localized one-line summary of this forecast, shared by the menu bar
+    /// tooltip and the popover caption.
+    func describe() -> String {
+        if willExhaustBeforeReset, let exhaust = exhaustDate {
+            return L.onPaceToLimit(Self.hhmm(exhaust))                   // "On pace to hit the limit at 14:08"
+        }
+        return L.projectedByReset(Int(projectedAtReset.rounded()))       // "~82% by reset at this pace"
+    }
+
+    /// Locale-aware "HH:mm" (matches the popover's session reset format).
+    private static func hhmm(_ date: Date) -> String {
+        let f = DateFormatter()
+        f.locale = AppLanguage.current.locale
+        f.dateFormat = "HH:mm"
+        return f.string(from: date)
     }
 }
 
@@ -107,6 +128,10 @@ final class AppSettings: ObservableObject {
     /// Optional override for the Codex sessions folder; empty = auto. Resolved in
     /// `CodexUsageReader` (setting > CODEX_HOME > ~/.codex/sessions).
     @Published var codexSessionsPath: String { didSet { defaults.set(codexSessionsPath, forKey: Keys.codexSessionsPath) } }
+    /// UI language override. `.system` follows the OS; `.ja`/`.en` force it.
+    /// Read back by `AppLanguage.current` via the shared `Keys.language` key, so
+    /// changing it republishes and re-renders every `L.…`-backed view.
+    @Published var language: LanguagePref { didSet { defaults.set(language.rawValue, forKey: Keys.language) } }
 
     init() {
         // Use a local reference so the nested helpers don't capture `self`
@@ -129,6 +154,7 @@ final class AppSettings: ObservableObject {
         barWarnPct    = double(Keys.barWarnPct, 60)
         barCritPct    = double(Keys.barCritPct, 85)
         codexSessionsPath = store.string(forKey: Keys.codexSessionsPath) ?? ""
+        language = LanguagePref(rawValue: store.string(forKey: Keys.language) ?? "") ?? .system
     }
 
     private enum Keys {
@@ -144,5 +170,7 @@ final class AppSettings: ObservableObject {
         static let barCritPct    = "barCritPct"
         // Single source of truth lives on the reader that consumes it.
         static let codexSessionsPath = CodexUsageReader.sessionsPathDefaultsKey
+        // Shared with AppLanguage so the override resolves globally.
+        static let language = AppLanguage.overrideKey
     }
 }

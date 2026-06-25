@@ -24,7 +24,7 @@ A lightweight macOS menu bar app that shows your Claude usage in real time.
   <img src="assets/screenshot-settings-ja.png" width="300" alt="ClaudeMeter settings (日本語)">
 </p>
 
-The UI follows your macOS language (Japanese / English).
+The UI follows your macOS language (Japanese / English) — or pick one manually in **Settings → Language**.
 
 ## What it shows
 
@@ -37,7 +37,9 @@ The same numbers as **claude.ai → Settings → Usage**, right in your menu bar
 - **Multiple accounts** — track several subscriptions/keys at once
 
 The menu bar shows the selected account's session % (e.g. `21%`), tinted by a
-burn-rate forecast. Click the icon for the full breakdown.
+burn-rate forecast; the icon flips to a warning when you're on pace to hit the
+limit before the window resets. Click it for the full breakdown — including the
+forecast ("on pace to hit the limit at HH:mm") above the session row.
 
 ## How it works
 

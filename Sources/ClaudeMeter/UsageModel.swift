@@ -248,11 +248,17 @@ final class UsageModel: ObservableObject {
         return "\(Int(session.utilization.rounded()))%"
     }
 
+    /// Burn-rate forecast for the 5h session window of the currently shown
+    /// account. `nil` when there is no session data yet.
+    func menuBarForecast(warnPct: Double, critPct: Double) -> SessionForecast? {
+        guard let session = usage?.fiveHour else { return nil }
+        return SessionForecast.compute(window: session, warnPct: warnPct, critPct: critPct)
+    }
+
     /// Burn-rate status for the 5h session window, used to color the menu bar
     /// icon/label. `.ok` when there is no session data yet.
     func menuBarStatus(warnPct: Double, critPct: Double) -> UsageStatus {
-        guard let session = usage?.fiveHour else { return .ok }
-        return SessionForecast.compute(window: session, warnPct: warnPct, critPct: critPct).status
+        menuBarForecast(warnPct: warnPct, critPct: critPct)?.status ?? .ok
     }
 
     /// Recompute the Codex rate-limit snapshot off the main actor (nonisolated reader).
