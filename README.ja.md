@@ -117,7 +117,7 @@ NOTARY_PROFILE="claude-meter" \
 
 ## 支援
 
-ClaudeMeter は無料・オープンソースです。役に立ったら **[GitHub Sponsors ❤️](https://github.com/sponsors/yotake)** での少額の支援が、Apple Developer 年会費の補填と継続的なメンテナンスの助けになります。
+ClaudeMeter は無料・オープンソースで、**1970年代生まれ・3歳と5歳の二児の父**の個人開発です。役に立ったら **[GitHub Sponsors ❤️](https://github.com/sponsors/yotake)** での少額のご支援が、**Apple Developer Program**（年 $99）の費用の補填になり、アプリを公証（Gatekeeper 警告なし）して継続メンテナンスする力になります。応援よろしくお願いします！🙏
 
 ## 注意事項
 

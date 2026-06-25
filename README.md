@@ -140,9 +140,11 @@ No secrets are written to the repo — credentials are read from the environment
 
 ## Support
 
-ClaudeMeter is free and open source. If it's useful to you, a small tip via
+ClaudeMeter is free and open source, built by a solo developer — a '70s-born dad
+of two young kids (3 and 5). If it's useful to you, a small tip via
 **[GitHub Sponsors ❤️](https://github.com/sponsors/yotake)** helps cover the
-Apple Developer membership and keeps it maintained.
+**Apple Developer Program** fee ($99/year), so I can notarize the app (no more
+Gatekeeper warning) and keep it maintained. Thank you! 🙏
 
 ## Caveats
 
