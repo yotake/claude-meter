@@ -4,7 +4,8 @@
 
 **[日本語 README はこちら / Japanese README](README.ja.md)**
 
-A lightweight macOS menu bar app that shows your Claude usage in real time.
+A lightweight macOS menu bar app that shows your Claude usage in real time and
+warns by burn rate before you run out.
 
 > ClaudeMeter is free. If it saves you time, you can **[sponsor development ❤️](https://github.com/sponsors/yotake)**.
 
@@ -31,6 +32,8 @@ The UI follows your macOS language (Japanese / English) — or pick one manually
 The same numbers as **claude.ai → Settings → Usage**, right in your menu bar:
 
 - **Current session** — 5-hour rolling window utilization, with time until reset
+- **Burn-rate warning** — warns before the session is exhausted if your current
+  pace is headed toward the limit
 - **Weekly limits** — all models / Sonnet only / Opus only, with reset day
 - **Codex rate limits** *(optional)* — read from your local Codex CLI logs
 - **API spend** *(optional)* — this month's spend via a Claude **Admin** key
@@ -51,6 +54,28 @@ Applications.
 Polls `https://api.anthropic.com/api/oauth/usage` every 5 minutes for
 subscription usage (5-hour session + 7-day limits). That endpoint requires an
 **OAuth token with the `user:profile` scope**.
+
+### Burn-rate forecast
+
+ClaudeMeter does not only color the icon by the current percentage. For the
+5-hour session, it uses the current utilization and reset time returned by the
+usage endpoint to estimate the current burn rate:
+
+```text
+elapsed time = 5 hours - time until reset
+burn rate    = current utilization / elapsed time
+projection   = burn rate × 5 hours
+```
+
+If that projection crosses your warning/critical thresholds, or if the current
+pace would hit 100% before the reset time, the menu bar changes color and the
+popover shows a forecast such as `On pace to hit the limit at 14:08` or
+`~82% by reset at this pace`.
+
+Because Claude's 5-hour window is rolling, this is intentionally conservative:
+it is an early warning based on the current average pace, not a precise future
+usage guarantee. Projection starts after the first 30 minutes of the window to
+avoid noisy alerts from tiny early samples.
 
 ### Authentication
 
