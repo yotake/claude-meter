@@ -148,6 +148,8 @@ struct UsagePopoverView: View {
 
     // Donation link opened by the Support button (free-app tip jar).
     static let supportURL = URL(string: "https://github.com/sponsors/yotake")!
+    static let repositoryURL = URL(string: "https://github.com/yotake/claude-meter")!
+    static let latestReleaseURL = URL(string: "https://github.com/yotake/claude-meter/releases/latest")!
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -296,11 +298,19 @@ struct UsagePopoverView: View {
 
             Divider()
             HStack {
+                actionButton({ NSWorkspace.shared.open(Self.repositoryURL) }) {
+                    Label("GitHub", systemImage: "chevron.left.forwardslash.chevron.right")
+                }
+                .buttonStyle(.borderless)
+                actionButton({ NSWorkspace.shared.open(Self.latestReleaseURL) }) {
+                    Label(L.updates, systemImage: "arrow.down.circle")
+                }
+                .buttonStyle(.borderless)
+                Spacer()
                 actionButton({ NSWorkspace.shared.open(Self.supportURL) }) {
                     Label(L.support, systemImage: "heart")
                 }
                 .buttonStyle(.borderless)
-                Spacer()
                 actionButton({ NSApplication.shared.terminate(nil) }) {
                     Text(L.quit)
                 }

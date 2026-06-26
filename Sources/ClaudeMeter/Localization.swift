@@ -89,6 +89,7 @@ enum L {
     static var updateToken: String   { ja ? "トークン更新" : "Update token" }
     static var logout: String        { ja ? "ログアウト" : "Log out" }
     static var quit: String          { ja ? "終了" : "Quit" }
+    static var updates: String       { ja ? "更新" : "Updates" }
     static var support: String       { ja ? "開発を支援" : "Support" }
     static var madeBy: String        { ja ? "無料 · 二児の父が個人開発 ❤️" : "Free · made by a dad of two ❤️" }
 

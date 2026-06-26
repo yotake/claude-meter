@@ -41,6 +41,11 @@ burn-rate forecast; the icon flips to a warning when you're on pace to hit the
 limit before the window resets. Click it for the full breakdown — including the
 forecast ("on pace to hit the limit at HH:mm") above the session row.
 
+The popover also includes quick links to the GitHub repo and the latest release
+page, so you can check for updates from the app. Updates are currently manual:
+download the newest DMG from GitHub Releases and replace the app in
+Applications.
+
 ## How it works
 
 Polls `https://api.anthropic.com/api/oauth/usage` every 5 minutes for
@@ -87,6 +92,12 @@ server's `Retry-After` (+60s) and recovers automatically — don't spam refresh.
      xattr -d com.apple.quarantine /Applications/ClaudeMeter.app
      ```
 3. Click the menu bar icon and paste your token (see **Setup** below).
+
+### Updating
+
+Open ClaudeMeter's popover and click **Updates** to jump to the latest GitHub
+Release. If a newer DMG is available, download it and replace the app in
+Applications. Auto-update is not built in yet.
 
 ## Setup (token)
 
