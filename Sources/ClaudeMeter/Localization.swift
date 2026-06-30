@@ -148,6 +148,12 @@ enum L {
         ja ? "このペースだとリセット時 約\(percent)%" : "~\(percent)% by reset at this pace"
     }
 
+    // MARK: - Demo mode
+    static var sampleDataHint: String {
+        ja ? "サンプルデータ — Settings からアカウントを追加"
+           : "Sample data — add your account in Settings"
+    }
+
     // MARK: - Errors: UsageError
     static var tokenInvalid: String {
         ja ? "トークンが無効です。`claude` を一度起動して再認証してください。"

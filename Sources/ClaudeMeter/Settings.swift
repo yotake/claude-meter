@@ -37,6 +37,10 @@ struct SessionForecast {
     let willExhaustBeforeReset: Bool
 
     /// Claude's session window length (5 hours).
+    /// TODO(v1.1 — ADR memory-bank/decisions/0003): demote this to a cold-start
+    /// fallback only. Derive the burn rate from sampled (time, utilization)
+    /// deltas (regression over recent samples) so the forecast no longer depends
+    /// on a fixed window length and auto-follows any future window change.
     static let windowLength: TimeInterval = 5 * 3600
 
     /// Don't project until at least this much of the window has elapsed. A small

@@ -5,6 +5,7 @@ import SwiftUI
 final class UsageModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var isLoading = false
+    @Published var isDemo = false
     @Published var subscriptionType: String?
     @Published var hasStoredCredentials: Bool = CredentialStore.hasStored()
     @Published var needsLogin: Bool = false
@@ -29,7 +30,45 @@ final class UsageModel: ObservableObject {
 
     init() {
         reloadAccounts()
+        #if APPSTORE
+        if accounts.isEmpty { loadDemoData() }
+        #endif
     }
+
+    #if APPSTORE
+    /// Populate two representative subscription accounts so App Store reviewers
+    /// and new users can explore the full UI without a real token.
+    func loadDemoData() {
+        let week = Date().addingTimeInterval(3 * 86400)
+        accounts = [
+            AccountInfo(id: "demo-a", label: "Team",     subscriptionType: "team", kind: .subscription),
+            AccountInfo(id: "demo-b", label: "Personal", subscriptionType: "pro",  kind: .subscription),
+        ]
+        accountUsages = [
+            "demo-a": Usage(
+                fiveHour: UsageWindow(utilization: 42, resetsAt: Date().addingTimeInterval(2 * 3600 + 12 * 60)),
+                sevenDay: UsageWindow(utilization: 63, resetsAt: week),
+                sevenDaySonnet: UsageWindow(utilization: 21, resetsAt: week),
+                sevenDayOpus: nil,
+                fetchedAt: Date()
+            ),
+            "demo-b": Usage(
+                fiveHour: UsageWindow(utilization: 8, resetsAt: Date().addingTimeInterval(3 * 3600)),
+                sevenDay: UsageWindow(utilization: 31, resetsAt: week),
+                sevenDaySonnet: UsageWindow(utilization: 12, resetsAt: week),
+                sevenDayOpus: nil,
+                fetchedAt: Date()
+            ),
+        ]
+        selectedAccountId = "demo-a"
+        subscriptionType  = "team"
+        needsLogin        = false
+        errorMessage      = nil
+        isDemo            = true
+        accountErrors     = [:]
+        accountApiUsage   = [:]
+    }
+    #endif
 
     // The usage endpoint rate-limits aggressive polling; >=180s is safe.
     private let refreshInterval: TimeInterval = 300
@@ -72,11 +111,16 @@ final class UsageModel: ObservableObject {
 
             let all = CredentialStore.allCredentials()
             guard !all.isEmpty else {
+                #if APPSTORE
+                loadDemoData()
+                #else
                 needsLogin = true
                 errorMessage = CredentialsError.notFound.errorDescription
                 accountUsages = [:]; accountApiUsage = [:]; accountErrors = [:]
+                #endif
                 return
             }
+            isDemo = false
             needsLogin = false
             errorMessage = nil
 
@@ -174,6 +218,7 @@ final class UsageModel: ObservableObject {
             reloadAccounts()
             hasStoredCredentials = true
             needsLogin = false
+            isDemo = false
             errorMessage = nil
             refresh()   // re-fetches all accounts, populating the new one
         } catch {
@@ -202,9 +247,13 @@ final class UsageModel: ObservableObject {
         accountApiUsage[id] = nil
         accountErrors[id] = nil
         if accounts.isEmpty {
+            #if APPSTORE
+            loadDemoData()
+            #else
             needsLogin = true
             timer?.invalidate()
             timer = nil
+            #endif
         }
     }
 
@@ -237,28 +286,45 @@ final class UsageModel: ObservableObject {
         selectedAccountId = CredentialStore.selectedId() ?? infos.first?.id
     }
 
-    /// Menu bar label: session "21%" for subscription accounts, or "$12" (month
-    /// spend) for API-billing accounts.
+    /// Menu bar label: covers all accounts in order, joined with " · ".
+    /// Subscription accounts: "\(utilization)%"; API accounts: "$\(cost)" or "API".
+    /// Accounts with no session data yet are skipped. Returns "–" when no account
+    /// has renderable data.
     var menuBarText: String {
-        if selectedAccountKind == .api {
-            if let cost = apiUsage?.monthCostUSD { return "$\(Int(cost.rounded()))" }
-            return "API"
+        var parts: [String] = []
+        for account in accounts {
+            if account.kind == .api {
+                if let cost = accountApiUsage[account.id]?.monthCostUSD {
+                    parts.append("$\(Int(cost.rounded()))")
+                } else {
+                    parts.append("API")
+                }
+            } else {
+                guard let session = accountUsages[account.id]?.fiveHour else { continue }
+                parts.append("\(Int(session.utilization.rounded()))%")
+            }
         }
-        guard let session = usage?.fiveHour else { return "–" }
-        return "\(Int(session.utilization.rounded()))%"
+        return parts.isEmpty ? "–" : parts.joined(separator: " · ")
     }
 
-    /// Burn-rate forecast for the 5h session window of the currently shown
-    /// account. `nil` when there is no session data yet.
-    func menuBarForecast(warnPct: Double, critPct: Double) -> SessionForecast? {
-        guard let session = usage?.fiveHour else { return nil }
-        return SessionForecast.compute(window: session, warnPct: warnPct, critPct: critPct)
-    }
-
-    /// Burn-rate status for the 5h session window, used to color the menu bar
-    /// icon/label. `.ok` when there is no session data yet.
+    /// Burn-rate status across ALL subscription accounts — the most severe wins
+    /// (critical > warning > ok). Used to color the menu bar icon/label.
+    /// Returns `.ok` when no subscription account has session data yet.
     func menuBarStatus(warnPct: Double, critPct: Double) -> UsageStatus {
-        menuBarForecast(warnPct: warnPct, critPct: critPct)?.status ?? .ok
+        var result: UsageStatus = .ok
+        for account in accounts where account.kind == .subscription {
+            guard let session = accountUsages[account.id]?.fiveHour else { continue }
+            let status = SessionForecast.compute(window: session, warnPct: warnPct, critPct: critPct).status
+            switch status {
+            case .critical:
+                return .critical   // can't get worse; short-circuit
+            case .warning where result == .ok:
+                result = .warning
+            default:
+                break
+            }
+        }
+        return result
     }
 
     /// Recompute the Codex rate-limit snapshot off the main actor (nonisolated reader).

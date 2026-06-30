@@ -93,9 +93,11 @@ enum CredentialStore {
         if !f.accounts.isEmpty {
             return f.accounts.map { AccountCredential(id: $0.id, kind: $0.kind ?? .subscription, creds: $0.asCredentials) }
         }
+        #if !APPSTORE
         if let creds = try? CredentialsLoader.load() {   // CLI ~/.claude/.credentials.json fallback
             return [AccountCredential(id: cliAccountId, kind: .subscription, creds: creds)]
         }
+        #endif
         return []
     }
 
@@ -201,8 +203,12 @@ enum CredentialStore {
     }
 
     fileprivate static func cliData() -> Data? {
+        #if APPSTORE
+        return nil
+        #else
         let url = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".claude/.credentials.json")
         return try? Data(contentsOf: url)
+        #endif
     }
 
     // MARK: - File handling

@@ -39,10 +39,10 @@ The same numbers as **claude.ai → Settings → Usage**, right in your menu bar
 - **API spend** *(optional)* — this month's spend via a Claude **Admin** key
 - **Multiple accounts** — track several subscriptions/keys at once
 
-The menu bar shows the selected account's session % (e.g. `21%`), tinted by a
-burn-rate forecast; the icon flips to a warning when you're on pace to hit the
-limit before the window resets. Click it for the full breakdown — including the
-forecast ("on pace to hit the limit at HH:mm") above the session row.
+The menu bar shows every account's session % (e.g. `5% · 59%`), tinted by a
+burn-rate forecast; the icon flips to a warning when any account is on pace to
+hit the limit before the window resets. Click it for the full breakdown —
+including the forecast ("on pace to hit the limit at HH:mm") above the session row.
 
 The popover also includes quick links to the GitHub repo and the latest release
 page, so you can check for updates from the app. Updates are currently manual:

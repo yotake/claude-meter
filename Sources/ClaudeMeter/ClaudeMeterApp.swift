@@ -48,12 +48,14 @@ struct ClaudeMeterApp: App {
                 fetchedAt: Date()
             ),
         ]
+        #if !APPSTORE
         model.codex = CodexUsage(
             primary: UsageWindow(utilization: 12, resetsAt: Date().addingTimeInterval(4 * 3600)),
             secondary: UsageWindow(utilization: 2, resetsAt: Date().addingTimeInterval(5 * 86400)),
             asOf: Date().addingTimeInterval(-6 * 86400),
             planType: "plus"
         )
+        #endif
         let settings = AppSettings()
         let view = VStack(alignment: .leading, spacing: 8) {
             MenuBarLabel(model: model, settings: settings)   // the menu bar label
@@ -111,9 +113,11 @@ struct MenuBarLabel: View {
         if settings.showClaudeInMenuBar {
             parts.append(model.menuBarText)              // selected Claude session % (or $ / –)
         }
+        #if !APPSTORE
         if settings.showCodexInMenuBar, let primary = model.codex?.primary {
             parts.append("\(Int(primary.utilization.rounded()))%")   // Codex session %
         }
+        #endif
         return parts.joined(separator: " · ")            // empty → icon only
     }
 }
@@ -150,6 +154,8 @@ struct UsagePopoverView: View {
     static let supportURL = URL(string: "https://github.com/sponsors/yotake")!
     static let repositoryURL = URL(string: "https://github.com/yotake/claude-meter")!
     static let latestReleaseURL = URL(string: "https://github.com/yotake/claude-meter/releases/latest")!
+    // App version (CFBundleShortVersionString) for the footer "vX.Y" link.
+    static let appVersion = (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -187,6 +193,12 @@ struct UsagePopoverView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
 
+            if model.isDemo {
+                Text(L.sampleDataHint)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+
             // Every added account's limits, shown compactly. A divider separates
             // consecutive accounts; the sections below add their own leading
             // dividers, so there is exactly one divider between each section.
@@ -195,6 +207,7 @@ struct UsagePopoverView: View {
                 accountBlock(account)
             }
 
+            #if !APPSTORE
             if settings.showCodex, let codex = model.codex {
                 Divider()
                 VStack(alignment: .leading, spacing: 6) {
@@ -229,6 +242,7 @@ struct UsagePopoverView: View {
                         .foregroundStyle(Date().timeIntervalSince(codex.asOf) > 5 * 3600 ? Color.orange : Color.secondary)
                 }
             }
+            #endif
 
             Divider()
 
@@ -297,13 +311,26 @@ struct UsagePopoverView: View {
             settingsSection
 
             Divider()
+            #if APPSTORE
+            HStack {
+                Spacer()
+                actionButton({ NSApplication.shared.terminate(nil) }) {
+                    Text(L.quit)
+                }
+                .buttonStyle(.borderless)
+                .foregroundStyle(.secondary)
+            }
+            #else
             HStack {
                 actionButton({ NSWorkspace.shared.open(Self.repositoryURL) }) {
                     Label("GitHub", systemImage: "chevron.left.forwardslash.chevron.right")
                 }
                 .buttonStyle(.borderless)
                 actionButton({ NSWorkspace.shared.open(Self.latestReleaseURL) }) {
-                    Label(L.updates, systemImage: "arrow.down.circle")
+                    // Shows the current version (e.g. "v1.4"); clicking still opens
+                    // the latest-release page, same as the old "Updates" link.
+                    Label(Self.appVersion.isEmpty ? L.updates : "v\(Self.appVersion)",
+                          systemImage: "arrow.down.circle")
                 }
                 .buttonStyle(.borderless)
                 Spacer()
@@ -323,6 +350,7 @@ struct UsagePopoverView: View {
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .center)
+            #endif
         }
         .padding(14)
         .frame(width: 300)
@@ -345,12 +373,14 @@ struct UsagePopoverView: View {
                         .background(.quaternary, in: Capsule())
                 }
                 Spacer()
-                actionButton({ model.removeAccount(account.id) }) {
-                    Image(systemName: "trash").font(.caption2)
+                if !model.isDemo {
+                    actionButton({ model.removeAccount(account.id) }) {
+                        Image(systemName: "trash").font(.caption2)
+                    }
+                    .buttonStyle(.borderless)
+                    .foregroundStyle(.red)
+                    .help(L.remove)
                 }
-                .buttonStyle(.borderless)
-                .foregroundStyle(.red)
-                .help(L.remove)
             }
             .contentShape(Rectangle())
             .onTapGesture { model.selectAccount(account.id) }
@@ -418,8 +448,11 @@ struct UsagePopoverView: View {
                     settingsToggle(L.showOpus, $settings.showOpus)
                 }
                 settingsToggle(L.showResetTime, $settings.showResetTime)
+                #if !APPSTORE
                 settingsToggle(L.showCodex, $settings.showCodex)
+                #endif
                 settingsToggle(L.showClaudeInMenuBar, $settings.showClaudeInMenuBar)
+                #if !APPSTORE
                 settingsToggle(L.showCodexInMenuBar, $settings.showCodexInMenuBar)
                 if settings.showCodex {
                     VStack(alignment: .leading, spacing: 2) {
@@ -444,6 +477,7 @@ struct UsagePopoverView: View {
                     }
                     .padding(.leading, 18)
                 }
+                #endif
                 Divider()
                 Text(L.barColorThresholds)
                     .font(.caption)
